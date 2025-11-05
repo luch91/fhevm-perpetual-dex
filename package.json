@@ -1,0 +1,32 @@
+{
+  "name": "fhevm-perpetual-dex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Privacy-preserving perpetual DEX built with fhEVM",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "contracts:compile": "npm run compile --workspace=packages/contracts",
+    "contracts:test": "npm run test --workspace=packages/contracts",
+    "contracts:deploy": "npm run deploy --workspace=packages/contracts",
+    "frontend:dev": "npm run dev --workspace=packages/frontend",
+    "frontend:build": "npm run build --workspace=packages/frontend",
+    "frontend:start": "npm run start --workspace=packages/frontend",
+    "dev": "npm run frontend:dev",
+    "install:all": "npm install && npm install --workspace=packages/contracts && npm install --workspace=packages/frontend"
+  },
+  "keywords": [
+    "fhevm",
+    "perpetual",
+    "dex",
+    "privacy",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

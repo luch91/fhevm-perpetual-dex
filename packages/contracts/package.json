@@ -1,0 +1,39 @@
+{
+  "name": "@fhevm-perp-dex/contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for fhEVM Perpetual DEX",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network zama",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "typechain": "hardhat typechain"
+  },
+  "keywords": [
+    "fhevm",
+    "solidity",
+    "hardhat"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/node": "^20.11.0",
+    "hardhat": "^2.19.4",
+    "hardhat-deploy": "^0.12.1",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "fhevm": "^0.5.0",
+    "fhevm-contracts": "^0.1.0",
+    "dotenv": "^16.3.1"
+  }
+}

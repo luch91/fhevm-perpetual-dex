@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.log
+
+# Next.js
+.next/
+out/
+.vercel
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+
+# Build outputs
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment
+deployments/localhost/
+deployments/hardhat/
+
+# Misc
+*.tsbuildinfo
+.cache
+
+.claude
