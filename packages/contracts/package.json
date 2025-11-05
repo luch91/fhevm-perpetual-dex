@@ -32,8 +32,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
+    "dotenv": "^16.3.1",
     "fhevm": "^0.5.0",
-    "fhevm-contracts": "^0.1.0",
-    "dotenv": "^16.3.1"
+    "fhevm-contracts": "^0.1.0"
   }
 }

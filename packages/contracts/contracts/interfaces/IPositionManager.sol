@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.25;
 
 import "fhevm/lib/TFHE.sol";
 
@@ -8,6 +8,7 @@ interface IPositionManager {
         euint64 size;           // Position size (encrypted)
         euint64 collateral;     // Collateral amount (encrypted)
         uint256 entryPrice;     // Entry price (public, from oracle)
+        uint256 leverage;       // Leverage multiplier (1x to 10x)
         uint256 timestamp;      // Position open timestamp
         bool isLong;            // Long or short (public)
         bool isOpen;            // Position status
@@ -39,7 +40,8 @@ interface IPositionManager {
         bytes calldata inputProof,
         einput encryptedCollateral,
         bytes calldata collateralProof,
-        bool isLong
+        bool isLong,
+        uint256 leverage
     ) external returns (uint256 positionId);
 
     function closePosition(uint256 positionId) external;
