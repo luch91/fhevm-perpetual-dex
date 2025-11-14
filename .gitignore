@@ -45,9 +45,10 @@ deployments/hardhat/
 # Misc
 *.tsbuildinfo
 .cache
+next-env.d.ts
 
 .claude
 
-nul 
+nul
 
 
