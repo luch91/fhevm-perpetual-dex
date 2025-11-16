@@ -8,11 +8,12 @@ import "@typechain/hardhat";
 import "hardhat-deploy";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 const ZAMA_DEVNET_RPC_URL = process.env.ZAMA_DEVNET_RPC_URL || "https://devnet.zama.ai";
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.25",
+    version: "0.8.24",
     settings: {
       optimizer: {
         enabled: true,
@@ -28,6 +29,12 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 1337,
+    },
+    sepolia: {
+      url: SEPOLIA_RPC_URL,
+      chainId: 11155111,
+      accounts: [PRIVATE_KEY],
+      gasPrice: "auto",
     },
     zama: {
       url: ZAMA_DEVNET_RPC_URL,

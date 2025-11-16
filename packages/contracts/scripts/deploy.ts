@@ -7,10 +7,24 @@ async function main() {
   console.log("Deploying contracts with account:", deployer.address);
   console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
 
+  // Use existing ChainlinkPriceOracle or deploy new one
+  let priceOracleAddress = process.env.CHAINLINK_ORACLE_ADDRESS || "0x45328039a3F8a5502e34Ee9038b1649e33eF4600";
+
+  if (process.env.DEPLOY_NEW_ORACLE === "true") {
+    console.log("Deploying new ChainlinkPriceOracle...");
+    const ChainlinkPriceOracle = await ethers.getContractFactory("ChainlinkPriceOracle");
+    const priceOracle = await ChainlinkPriceOracle.deploy();
+    await priceOracle.waitForDeployment();
+    priceOracleAddress = await priceOracle.getAddress();
+    console.log("✓ ChainlinkPriceOracle deployed to:", priceOracleAddress);
+  } else {
+    console.log("Using existing ChainlinkPriceOracle at:", priceOracleAddress);
+  }
+
   // Deploy PositionManager
-  console.log("Deploying PositionManager...");
+  console.log("\nDeploying PositionManager...");
   const PositionManager = await ethers.getContractFactory("PositionManager");
-  const positionManager = await PositionManager.deploy();
+  const positionManager = await PositionManager.deploy(priceOracleAddress);
   await positionManager.waitForDeployment();
   const positionManagerAddress = await positionManager.getAddress();
   console.log("✓ PositionManager deployed to:", positionManagerAddress);
@@ -31,16 +45,16 @@ async function main() {
   console.log("Chain ID:", (await ethers.provider.getNetwork()).chainId);
   console.log("\nContract Addresses:");
   console.log("-------------------");
+  console.log("ChainlinkPriceOracle:", priceOracleAddress);
   console.log("PositionManager:", positionManagerAddress);
   console.log("PerpetualDEX:", perpetualDEXAddress);
   console.log("\nDeployer:", deployer.address);
   console.log("=".repeat(60));
 
   // Save deployment info
-  console.log("\n⚠ IMPORTANT: Update your .env file with these addresses:");
-  console.log(`POSITION_MANAGER_ADDRESS=${positionManagerAddress}`);
-  console.log(`PERPETUAL_DEX_ADDRESS=${perpetualDEXAddress}`);
-  console.log(`\nNEXT_PUBLIC_POSITION_MANAGER_ADDRESS=${positionManagerAddress}`);
+  console.log("\n⚠ IMPORTANT: Update your .env.local file with these addresses:");
+  console.log(`NEXT_PUBLIC_CHAINLINK_ORACLE_ADDRESS=${priceOracleAddress}`);
+  console.log(`NEXT_PUBLIC_POSITION_MANAGER_ADDRESS=${positionManagerAddress}`);
   console.log(`NEXT_PUBLIC_PERPETUAL_DEX_ADDRESS=${perpetualDEXAddress}`);
 }
 

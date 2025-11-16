@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
-import "fhevm/lib/TFHE.sol";
-import "fhevm/gateway/GatewayCaller.sol";
+import "@fhevm/solidity/lib/FHE.sol";
 import "../interfaces/IPositionManager.sol";
 import "../utils/ACLManager.sol";
 import "../oracles/PriceOracle.sol";
@@ -67,33 +66,29 @@ contract PositionManager is IPositionManager, ACLManager {
     }
 
     /**
-     * @notice Open a new trading position with encrypted size and collateral
-     * @param encryptedSize Encrypted input for position size
-     * @param inputProof Proof for encrypted size
-     * @param encryptedCollateral Encrypted input for collateral amount
-     * @param collateralProof Proof for encrypted collateral
+     * @notice Open a new trading position with plaintext inputs (encrypted on-chain)
+     * @param size Position size (will be encrypted on-chain)
+     * @param collateral Collateral amount (will be encrypted on-chain)
      * @param isLong True for long position, false for short
      * @param leverage Leverage multiplier (1-10)
      * @return positionId The ID of the newly created position
      */
     function openPosition(
-        einput encryptedSize,
-        bytes calldata inputProof,
-        einput encryptedCollateral,
-        bytes calldata collateralProof,
+        uint64 size,
+        uint64 collateral,
         bool isLong,
         uint256 leverage
     ) external returns (uint256 positionId) {
         // Validate leverage
         require(leverage >= MIN_LEVERAGE && leverage <= MAX_LEVERAGE, "Invalid leverage");
 
-        // Convert encrypted inputs to euint64
-        euint64 size = TFHE.asEuint64(encryptedSize, inputProof);
-        euint64 collateral = TFHE.asEuint64(encryptedCollateral, collateralProof);
+        // Validate inputs
+        require(size > 0, "Size must be greater than zero");
+        require(collateral > 0, "Collateral must be greater than zero");
 
-        // Validate inputs (check they're not zero)
-        ebool sizeValid = TFHE.ne(size, TFHE.asEuint64(0));
-        ebool collateralValid = TFHE.ne(collateral, TFHE.asEuint64(0));
+        // Convert plaintext inputs to encrypted euint64 (encrypted on-chain)
+        euint64 encSize = FHE.asEuint64(size);
+        euint64 encCollateral = FHE.asEuint64(collateral);
 
         // Get current price from oracle
         (uint256 currentPrice, , uint256 timestamp) = priceOracle.getPrice(DEFAULT_ASSET);
@@ -103,8 +98,8 @@ contract PositionManager is IPositionManager, ACLManager {
 
         // Create position with encrypted data
         positions[positionId] = Position({
-            size: size,
-            collateral: collateral,
+            size: encSize,
+            collateral: encCollateral,
             entryPrice: currentPrice,
             leverage: leverage,
             timestamp: block.timestamp,
@@ -113,10 +108,10 @@ contract PositionManager is IPositionManager, ACLManager {
         });
 
         // Grant access to encrypted data
-        TFHE.allow(size, msg.sender);
-        TFHE.allow(size, address(this));
-        TFHE.allow(collateral, msg.sender);
-        TFHE.allow(collateral, address(this));
+        FHE.allow(encSize, msg.sender);
+        FHE.allow(encSize, address(this));
+        FHE.allow(encCollateral, msg.sender);
+        FHE.allow(encCollateral, address(this));
 
         // Track position for trader
         traderPositions[msg.sender].push(positionId);
@@ -180,8 +175,8 @@ contract PositionManager is IPositionManager, ACLManager {
         }
 
         // Grant PnL access to position owner
-        TFHE.allow(pnl, msg.sender);
-        TFHE.allow(pnl, address(this));
+        FHE.allow(pnl, msg.sender);
+        FHE.allow(pnl, address(this));
 
         // Mark position as closed
         position.isOpen = false;

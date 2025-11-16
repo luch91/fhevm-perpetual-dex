@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
-import "fhevm/lib/TFHE.sol";
-import "fhevm/gateway/GatewayCaller.sol";
+import "@fhevm/solidity/lib/FHE.sol";
 
 /**
  * @title ACLManager
  * @notice Manages Access Control Lists for encrypted data in fhEVM
  * @dev Handles permissions for who can access encrypted position data
  */
-contract ACLManager is GatewayCaller {
+contract ACLManager {
     // Mapping to track authorized contracts
     mapping(address => bool) public authorizedContracts;
 
@@ -52,7 +51,7 @@ contract ACLManager is GatewayCaller {
      * @param user Address of the user
      */
     function allowUser(euint64 encryptedValue, address user) internal {
-        TFHE.allow(encryptedValue, user);
+        FHE.allow(encryptedValue, user);
     }
 
     /**
@@ -62,7 +61,7 @@ contract ACLManager is GatewayCaller {
      */
     function allowContract(euint64 encryptedValue, address contractAddress) internal {
         require(authorizedContracts[contractAddress], "ACLManager: contract not authorized");
-        TFHE.allow(encryptedValue, contractAddress);
+        FHE.allow(encryptedValue, contractAddress);
     }
 
     /**
@@ -76,9 +75,9 @@ contract ACLManager is GatewayCaller {
         address user,
         address contractAddress
     ) internal {
-        TFHE.allow(encryptedValue, user);
+        FHE.allow(encryptedValue, user);
         if (authorizedContracts[contractAddress]) {
-            TFHE.allow(encryptedValue, contractAddress);
+            FHE.allow(encryptedValue, contractAddress);
         }
     }
 }

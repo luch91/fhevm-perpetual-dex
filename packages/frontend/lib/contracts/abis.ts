@@ -4,11 +4,10 @@
 export const POSITION_MANAGER_ABI = [
   {
     inputs: [
-      { internalType: 'bytes32', name: 'encryptedSize', type: 'bytes32' },
-      { internalType: 'bytes', name: 'inputProof', type: 'bytes' },
-      { internalType: 'bytes32', name: 'encryptedCollateral', type: 'bytes32' },
-      { internalType: 'bytes', name: 'collateralProof', type: 'bytes' },
+      { internalType: 'uint64', name: 'size', type: 'uint64' },
+      { internalType: 'uint64', name: 'collateral', type: 'uint64' },
       { internalType: 'bool', name: 'isLong', type: 'bool' },
+      { internalType: 'uint256', name: 'leverage', type: 'uint256' },
     ],
     name: 'openPosition',
     outputs: [{ internalType: 'uint256', name: 'positionId', type: 'uint256' }],
@@ -31,6 +30,7 @@ export const POSITION_MANAGER_ABI = [
           { internalType: 'euint64', name: 'size', type: 'uint256' },
           { internalType: 'euint64', name: 'collateral', type: 'uint256' },
           { internalType: 'uint256', name: 'entryPrice', type: 'uint256' },
+          { internalType: 'uint256', name: 'leverage', type: 'uint256' },
           { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
           { internalType: 'bool', name: 'isLong', type: 'bool' },
           { internalType: 'bool', name: 'isOpen', type: 'bool' },
@@ -102,6 +102,38 @@ export const PERPETUAL_DEX_ABI = [
     name: 'isPaused',
     outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+export const PRICE_ORACLE_ABI = [
+  {
+    inputs: [{ internalType: 'string', name: 'asset', type: 'string' }],
+    name: 'getPrice',
+    outputs: [
+      { internalType: 'uint256', name: 'price', type: 'uint256' },
+      { internalType: 'uint8', name: 'decimals', type: 'uint8' },
+      { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'string', name: 'asset', type: 'string' }],
+    name: 'isPriceFresh',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'string', name: 'asset', type: 'string' },
+      { internalType: 'uint256', name: 'price', type: 'uint256' },
+      { internalType: 'uint8', name: 'decimals', type: 'uint8' },
+    ],
+    name: 'updatePrice',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
 ] as const;

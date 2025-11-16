@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
-import "fhevm/lib/TFHE.sol";
+import "@fhevm/solidity/lib/FHE.sol";
 
 interface IPositionManager {
     struct Position {
@@ -36,10 +36,8 @@ interface IPositionManager {
     );
 
     function openPosition(
-        einput encryptedSize,
-        bytes calldata inputProof,
-        einput encryptedCollateral,
-        bytes calldata collateralProof,
+        uint64 size,
+        uint64 collateral,
         bool isLong,
         uint256 leverage
     ) external returns (uint256 positionId);

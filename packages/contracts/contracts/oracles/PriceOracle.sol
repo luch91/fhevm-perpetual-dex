@@ -1,12 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title PriceOracle
- * @notice Provides price feeds for trading pairs
- * @dev Phase 2: Uses mock prices. Phase 3: Will integrate Chainlink
+ * @notice DEPRECATED - This contract has been replaced by ChainlinkPriceOracle
+ * @dev DO NOT USE FOR NEW DEPLOYMENTS
+ *
+ * **MIGRATION NOTICE:**
+ * - This mock oracle was used in Phase 1-4 for testing
+ * - Deployed at: 0xC201C14DFA83F659B32e4d625209c54cb9B7D120 (Sepolia)
+ * - Replaced by: ChainlinkPriceOracle at 0x45328039a3F8a5502e34Ee9038b1649e33eF4600
+ * - Migration Date: November 15, 2025 (Phase 6B)
+ * - Use ChainlinkPriceOracle for all new deployments
+ *
+ * **WARNING:** This contract uses manually updated prices and is not suitable for production.
+ * For decentralized, real-time price feeds, use ChainlinkPriceOracle instead.
  */
 contract PriceOracle is Ownable {
     // Price data structure

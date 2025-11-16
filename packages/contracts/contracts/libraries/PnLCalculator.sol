@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
-import "fhevm/lib/TFHE.sol";
+import "@fhevm/solidity/lib/FHE.sol";
 
 /**
  * @title PnLCalculator
@@ -30,13 +30,15 @@ library PnLCalculator {
         if (currentPrice >= entryPrice) {
             // Profit case
             uint256 priceDelta = currentPrice - entryPrice;
-            euint64 encryptedDelta = TFHE.asEuint64(priceDelta);
-            return TFHE.mul(encryptedSize, encryptedDelta);
+            require(priceDelta <= type(uint64).max, "Price delta exceeds uint64");
+            euint64 encryptedDelta = FHE.asEuint64(uint64(priceDelta));
+            return FHE.mul(encryptedSize, encryptedDelta);
         } else {
             // Loss case (handle as negative in application layer)
             uint256 priceDelta = entryPrice - currentPrice;
-            euint64 encryptedDelta = TFHE.asEuint64(priceDelta);
-            return TFHE.mul(encryptedSize, encryptedDelta);
+            require(priceDelta <= type(uint64).max, "Price delta exceeds uint64");
+            euint64 encryptedDelta = FHE.asEuint64(uint64(priceDelta));
+            return FHE.mul(encryptedSize, encryptedDelta);
         }
     }
 
@@ -59,13 +61,15 @@ library PnLCalculator {
         if (entryPrice >= currentPrice) {
             // Profit case
             uint256 priceDelta = entryPrice - currentPrice;
-            euint64 encryptedDelta = TFHE.asEuint64(priceDelta);
-            return TFHE.mul(encryptedSize, encryptedDelta);
+            require(priceDelta <= type(uint64).max, "Price delta exceeds uint64");
+            euint64 encryptedDelta = FHE.asEuint64(uint64(priceDelta));
+            return FHE.mul(encryptedSize, encryptedDelta);
         } else {
             // Loss case
             uint256 priceDelta = currentPrice - entryPrice;
-            euint64 encryptedDelta = TFHE.asEuint64(priceDelta);
-            return TFHE.mul(encryptedSize, encryptedDelta);
+            require(priceDelta <= type(uint64).max, "Price delta exceeds uint64");
+            euint64 encryptedDelta = FHE.asEuint64(uint64(priceDelta));
+            return FHE.mul(encryptedSize, encryptedDelta);
         }
     }
 
@@ -82,8 +86,9 @@ library PnLCalculator {
     {
         // Value = size * currentPrice
         // Note: Division by PRECISION should be done after decryption
-        euint64 encryptedPrice = TFHE.asEuint64(currentPrice);
-        return TFHE.mul(encryptedSize, encryptedPrice);
+        require(currentPrice <= type(uint64).max, "Price exceeds uint64");
+        euint64 encryptedPrice = FHE.asEuint64(uint64(currentPrice));
+        return FHE.mul(encryptedSize, encryptedPrice);
     }
 
     /**

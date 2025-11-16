@@ -3,15 +3,27 @@
 import { useState } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { ethers } from 'ethers';
-import { initFhevm, encryptValue } from '@/lib/fhevm/client';
-import { getContractAddress } from '@/lib/contracts/addresses';
 import { POSITION_MANAGER_ABI } from '@/lib/contracts/abis';
 
-export default function OrderForm() {
+const ASSETS = ['BTC/USD', 'ETH/USD', 'SOL/USD'] as const;
+type Asset = typeof ASSETS[number];
+
+interface OrderFormProps {
+  onAssetChange?: (asset: Asset) => void;
+}
+
+export default function OrderForm({ onAssetChange }: OrderFormProps) {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
+  const [asset, setAsset] = useState<Asset>('BTC/USD');
+
+  const handleAssetChange = (newAsset: Asset) => {
+    setAsset(newAsset);
+    onAssetChange?.(newAsset);
+  };
   const [side, setSide] = useState<'long' | 'short'>('long');
+  const [leverage, setLeverage] = useState<number>(1);
   const [size, setSize] = useState('');
   const [collateral, setCollateral] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,30 +50,27 @@ export default function OrderForm() {
       const provider = new ethers.BrowserProvider(walletClient as any);
       const signer = await provider.getSigner();
 
-      // Initialize fhEVM
-      await initFhevm(provider);
+      // Get contract address from environment
+      const positionManagerAddress = process.env.NEXT_PUBLIC_POSITION_MANAGER_ADDRESS as string;
+      if (!positionManagerAddress) {
+        throw new Error('Position Manager address not configured');
+      }
 
-      // Encrypt position size and collateral
-      console.log('Encrypting position data...');
-      const encryptedSize = await encryptValue(BigInt(size));
-      const encryptedCollateral = await encryptValue(BigInt(collateral));
-
-      // Get contract
-      const positionManagerAddress = getContractAddress(8009, 'positionManager');
       const contract = new ethers.Contract(
         positionManagerAddress,
         POSITION_MANAGER_ABI,
         signer
       );
 
-      // Open position
-      console.log('Opening position...');
+      // Open position with plaintext inputs (encrypted on-chain)
+      console.log(`Opening ${side} position with ${leverage}x leverage...`);
+      console.log(`Asset: ${asset}, Size: ${size}, Collateral: ${collateral}`);
+
       const tx = await contract.openPosition(
-        encryptedSize.data,
-        encryptedSize.signature,
-        encryptedCollateral.data,
-        encryptedCollateral.signature,
-        side === 'long'
+        BigInt(size),
+        BigInt(collateral),
+        side === 'long',
+        BigInt(leverage)
       );
 
       console.log('Transaction sent:', tx.hash);
@@ -85,8 +94,26 @@ export default function OrderForm() {
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-6">Open Position</h2>
 
+      {/* Asset Selector */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-400 mb-2">
+          Asset
+        </label>
+        <select
+          value={asset}
+          onChange={(e) => handleAssetChange(e.target.value as Asset)}
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          {ASSETS.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Side Selector */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4">
         <button
           onClick={() => setSide('long')}
           className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
@@ -107,6 +134,45 @@ export default function OrderForm() {
         >
           Short
         </button>
+      </div>
+
+      {/* Leverage Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-400 mb-2">
+          Leverage: {leverage}x
+        </label>
+        <div className="flex items-center gap-4">
+          <input
+            type="range"
+            min="1"
+            max="10"
+            step="1"
+            value={leverage}
+            onChange={(e) => setLeverage(Number(e.target.value))}
+            className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            style={{
+              background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((leverage - 1) / 9) * 100}%, #374151 ${((leverage - 1) / 9) * 100}%, #374151 100%)`
+            }}
+          />
+          <div className="flex gap-1">
+            {[1, 2, 5, 10].map((lev) => (
+              <button
+                key={lev}
+                onClick={() => setLeverage(lev)}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  leverage === lev
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                {lev}x
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">
+          Higher leverage = Higher risk & potential reward
+        </p>
       </div>
 
       {/* Size Input */}
@@ -173,9 +239,14 @@ export default function OrderForm() {
 
       {/* Info */}
       <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 mb-2">
           <strong>Note:</strong> Position size and collateral are encrypted using fhEVM. Only you can decrypt and view your position details.
         </p>
+        {leverage > 1 && (
+          <p className="text-xs text-yellow-400">
+            <strong>Warning:</strong> Using {leverage}x leverage amplifies both gains and losses. Trade responsibly.
+          </p>
+        )}
       </div>
     </div>
   );

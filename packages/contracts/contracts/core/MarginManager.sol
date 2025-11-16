@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.24;
 
-import "fhevm/lib/TFHE.sol";
+import "@fhevm/solidity/lib/FHE.sol";
 import "../utils/ACLManager.sol";
 
 /**
@@ -26,24 +26,26 @@ contract MarginManager is ACLManager {
     event MarginCall(address indexed user, uint256 positionId);
 
     /**
-     * @notice Deposit collateral for trading
-     * @param amount Encrypted collateral amount to deposit
+     * @notice Deposit collateral for trading (plaintext input, encrypted on-chain)
+     * @param amount Collateral amount to deposit
      */
-    function depositCollateral(einput amount, bytes calldata inputProof) external {
-        euint64 encryptedAmount = TFHE.asEuint64(amount, inputProof);
+    function depositCollateral(uint64 amount) external {
+        require(amount > 0, "Amount must be greater than zero");
 
+        // Convert plaintext to encrypted
+        euint64 encryptedAmount = FHE.asEuint64(amount);
 
         // Add to user's collateral balance
         euint64 currentBalance = encryptedCollateral[msg.sender];
-        if (TFHE.isInitialized(currentBalance)) {
-            encryptedCollateral[msg.sender] = TFHE.add(currentBalance, encryptedAmount);
+        if (FHE.isInitialized(currentBalance)) {
+            encryptedCollateral[msg.sender] = FHE.add(currentBalance, encryptedAmount);
         } else {
             encryptedCollateral[msg.sender] = encryptedAmount;
         }
 
         // Grant access to the user
-        TFHE.allow(encryptedCollateral[msg.sender], address(this));
-        TFHE.allow(encryptedCollateral[msg.sender], msg.sender);
+        FHE.allow(encryptedCollateral[msg.sender], address(this));
+        FHE.allow(encryptedCollateral[msg.sender], msg.sender);
 
         // Note: Event emission with encrypted data requires proper reencryption handling
         emit CollateralDeposited(msg.sender, "");
@@ -51,18 +53,20 @@ contract MarginManager is ACLManager {
 
     /**
      * @notice Withdraw collateral (must have no open positions or sufficient margin)
-     * @param amount Encrypted amount to withdraw
+     * @param amount Amount to withdraw
      */
-    function withdrawCollateral(einput amount, bytes calldata inputProof) external {
-        euint64 encryptedAmount = TFHE.asEuint64(amount, inputProof);
+    function withdrawCollateral(uint64 amount) external {
+        require(amount > 0, "Amount must be greater than zero");
+
+        euint64 encryptedAmount = FHE.asEuint64(amount);
         euint64 currentBalance = encryptedCollateral[msg.sender];
 
         // Subtract from balance
-        encryptedCollateral[msg.sender] = TFHE.sub(currentBalance, encryptedAmount);
+        encryptedCollateral[msg.sender] = FHE.sub(currentBalance, encryptedAmount);
 
         // Grant access
-        TFHE.allow(encryptedCollateral[msg.sender], address(this));
-        TFHE.allow(encryptedCollateral[msg.sender], msg.sender);
+        FHE.allow(encryptedCollateral[msg.sender], address(this));
+        FHE.allow(encryptedCollateral[msg.sender], msg.sender);
 
         // Note: Event emission with encrypted data requires proper reencryption handling
         emit CollateralWithdrawn(msg.sender, "");
@@ -128,9 +132,10 @@ contract MarginManager is ACLManager {
         uint256 leverage
     ) public returns (ebool) {
         uint256 requiredMargin = calculateInitialMargin(positionSize, leverage);
-        euint64 encryptedRequired = TFHE.asEuint64(requiredMargin);
+        require(requiredMargin <= type(uint64).max, "Required margin exceeds uint64");
+        euint64 encryptedRequired = FHE.asEuint64(uint64(requiredMargin));
 
-        return TFHE.ge(encryptedCollateralAmount, encryptedRequired);
+        return FHE.ge(encryptedCollateralAmount, encryptedRequired);
     }
 
     /**
@@ -148,9 +153,10 @@ contract MarginManager is ACLManager {
         uint256 leverage
     ) public returns (ebool) {
         uint256 maintenanceMargin = calculateMaintenanceMargin(positionSize, leverage);
-        euint64 encryptedMaintenance = TFHE.asEuint64(maintenanceMargin);
+        require(maintenanceMargin <= type(uint64).max, "Maintenance margin exceeds uint64");
+        euint64 encryptedMaintenance = FHE.asEuint64(uint64(maintenanceMargin));
 
-        return TFHE.ge(encryptedCollateralAmount, encryptedMaintenance);
+        return FHE.ge(encryptedCollateralAmount, encryptedMaintenance);
     }
 
     /**
@@ -166,7 +172,7 @@ contract MarginManager is ACLManager {
         require(leverage >= MIN_LEVERAGE && leverage <= MAX_LEVERAGE, "Invalid leverage");
 
         // Max position size = collateral * leverage
-        euint64 leverageEncrypted = TFHE.asEuint64(leverage);
-        return TFHE.mul(encryptedCollateralAmount, leverageEncrypted);
+        euint64 leverageEncrypted = FHE.asEuint64(uint64(leverage));
+        return FHE.mul(encryptedCollateralAmount, leverageEncrypted);
     }
 }
