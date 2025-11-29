@@ -3,28 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
-
-// Chainlink Price Oracle ABI (minimal for reading prices)
-const CHAINLINK_ORACLE_ABI = [
-  {
-    inputs: [{ name: 'asset', type: 'string' }],
-    name: 'getPrice',
-    outputs: [
-      { name: 'price', type: 'uint256' },
-      { name: 'decimals', type: 'uint8' },
-      { name: 'timestamp', type: 'uint256' },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{ name: 'asset', type: 'string' }],
-    name: 'isPriceFresh',
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
+import { CHAINLINK_ORACLE_ABI } from '@/lib/contracts/abis';
 
 interface PriceData {
   price: string;
@@ -69,7 +48,6 @@ const MOCK_PRICES: Record<string, PriceData> = {
 };
 
 const CHAINLINK_ORACLE_ADDRESS = process.env.NEXT_PUBLIC_CHAINLINK_ORACLE_ADDRESS as `0x${string}`;
-const PRICE_ORACLE_ADDRESS = process.env.NEXT_PUBLIC_PRICE_ORACLE_ADDRESS as `0x${string}`;
 
 export default function RealTimePriceDisplay() {
   const publicClient = usePublicClient();
@@ -89,10 +67,8 @@ export default function RealTimePriceDisplay() {
       setError(null);
 
       const pricePromises = ASSETS.map(async (asset) => {
-        // Try Chainlink oracle first for BTC and ETH
-        const oracleAddress = (asset.symbol === 'BTC/USD' || asset.symbol === 'ETH/USD')
-          ? CHAINLINK_ORACLE_ADDRESS
-          : PRICE_ORACLE_ADDRESS;
+        // Use Chainlink oracle for all assets (BTC, ETH, SOL)
+        const oracleAddress = CHAINLINK_ORACLE_ADDRESS;
 
         if (!oracleAddress) {
           console.warn(`No oracle address configured for ${asset.symbol}, using mock price`);

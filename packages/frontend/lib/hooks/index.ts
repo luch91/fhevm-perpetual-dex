@@ -2,3 +2,6 @@
 export * from "./usePositions";
 export * from "./usePriceOracle";
 export * from "./useClosePosition";
+export * from "./useFhevm";
+export * from "./useEncryptedPositions";
+export * from "./usePositionHistory";

@@ -29,6 +29,18 @@ export default function Header() {
             >
               Positions
             </Link>
+            <Link
+              href="/history"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              History
+            </Link>
+            <Link
+              href="/analytics"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Analytics
+            </Link>
           </div>
 
           {/* Wallet Connect Button */}

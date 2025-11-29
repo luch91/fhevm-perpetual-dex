@@ -51,6 +51,13 @@ export const POSITION_MANAGER_ABI = [
     type: 'function',
   },
   {
+    inputs: [{ internalType: 'address', name: 'trader', type: 'address' }],
+    name: 'getPositionCount',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'uint256', name: 'positionId', type: 'uint256' }],
     name: 'getEncryptedSize',
     outputs: [{ internalType: 'euint64', name: '', type: 'uint256' }],
@@ -137,3 +144,7 @@ export const PRICE_ORACLE_ABI = [
     type: 'function',
   },
 ] as const;
+
+// Chainlink Oracle uses the same interface as PriceOracle
+// Export as alias for clarity and future extensibility
+export const CHAINLINK_ORACLE_ABI = PRICE_ORACLE_ABI;

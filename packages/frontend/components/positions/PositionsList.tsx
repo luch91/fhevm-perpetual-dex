@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 import { POSITION_MANAGER_ABI } from '@/lib/contracts/abis';
 import { CONTRACTS } from '@/lib/config/contracts';
+import { useLivePnL } from '@/lib/hooks/useLivePnL';
 
 interface Position {
   id: number;
@@ -107,7 +108,7 @@ function PositionCard({ position, currentPrice, onClose }: PositionCardProps) {
       {isOpen && (
         <button
           onClick={() => onClose(id)}
-          className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded font-semibold transition-colors"
+          className="w-full bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white py-2 md:py-2 min-h-[44px] rounded font-semibold text-base transition-colors"
         >
           Close Position
         </button>
@@ -120,32 +121,29 @@ export default function PositionsList() {
   const { address, isConnected } = useAccount();
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState(97234); // BTC price
   const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('open');
+
+  // Use live PnL hook for real-time price updates
+  const { currentPrice, isLoading: priceLoading } = useLivePnL(positions);
 
   useEffect(() => {
     if (isConnected && address) {
       fetchPositions();
-      // Fetch current price
-      fetchCurrentPrice();
     }
   }, [address, isConnected]);
 
-  async function fetchCurrentPrice() {
-    try {
-      // Fetch from CoinGecko
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
-      );
-      const data = await response.json();
-      setCurrentPrice(data.bitcoin.usd);
-    } catch (error) {
-      console.error('Failed to fetch current price:', error);
-    }
-  }
-
   async function fetchPositions() {
     if (!address) return;
+
+    if (!CONTRACTS.POSITION_MANAGER) {
+      console.warn('Position Manager address not configured');
+      return;
+    }
+
+    if (typeof window === 'undefined' || !window.ethereum) {
+      console.warn('No ethereum provider found');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -158,7 +156,6 @@ export default function PositionsList() {
 
       // Get position count for this trader
       const count = await contract.getPositionCount(address);
-      console.log('Position count:', count.toString());
 
       // Fetch all positions (this is simplified - in production, use events)
       const fetchedPositions: Position[] = [];
@@ -232,28 +229,39 @@ export default function PositionsList() {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Your Positions</h2>
+    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg md:text-xl font-semibold">Your Positions</h2>
+          {positions.length > 0 && (
+            <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              LIVE
+            </span>
+          )}
+        </div>
         <button
           onClick={fetchPositions}
           disabled={loading}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-700 rounded font-semibold transition-colors"
+          className="w-full sm:w-auto px-4 py-2 min-h-[44px] bg-primary-500 hover:bg-primary-600 active:bg-primary-700 disabled:bg-gray-700 rounded font-semibold transition-colors"
         >
           {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4 md:mb-6">
         {(['all', 'open', 'closed'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded font-semibold transition-colors ${
+            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 min-h-[44px] rounded font-semibold text-sm md:text-base transition-colors ${
               filter === f
                 ? 'bg-primary-500 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 active:bg-gray-600'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -269,12 +277,12 @@ export default function PositionsList() {
           No {filter === 'all' ? '' : filter} positions found
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {filteredPositions.map((position) => (
             <PositionCard
               key={position.id}
               position={position}
-              currentPrice={currentPrice}
+              currentPrice={currentPrice || 97234}
               onClose={handleClosePosition}
             />
           ))}
@@ -283,20 +291,20 @@ export default function PositionsList() {
 
       {/* Summary stats */}
       {positions.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-800 grid grid-cols-3 gap-4">
+        <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-800 grid grid-cols-3 gap-3 md:gap-4">
           <div>
-            <div className="text-gray-400 text-sm">Total Positions</div>
-            <div className="text-2xl font-bold">{positions.length}</div>
+            <div className="text-gray-400 text-xs md:text-sm">Total Positions</div>
+            <div className="text-xl md:text-2xl font-bold">{positions.length}</div>
           </div>
           <div>
-            <div className="text-gray-400 text-sm">Open Positions</div>
-            <div className="text-2xl font-bold text-long">
+            <div className="text-gray-400 text-xs md:text-sm">Open Positions</div>
+            <div className="text-xl md:text-2xl font-bold text-long">
               {positions.filter(p => p.isOpen).length}
             </div>
           </div>
           <div>
-            <div className="text-gray-400 text-sm">Closed Positions</div>
-            <div className="text-2xl font-bold text-gray-400">
+            <div className="text-gray-400 text-xs md:text-sm">Closed Positions</div>
+            <div className="text-xl md:text-2xl font-bold text-gray-400">
               {positions.filter(p => !p.isOpen).length}
             </div>
           </div>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/layout/Header';
+import ToastContainer from '@/components/ui/ToastContainer';
 import { Web3Provider } from '@/lib/providers/web3-provider';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,6 +25,7 @@ export default function RootLayout({
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </main>
+          <ToastContainer />
         </Web3Provider>
       </body>
     </html>

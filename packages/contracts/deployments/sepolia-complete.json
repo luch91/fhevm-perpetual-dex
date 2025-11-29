@@ -1,0 +1,11 @@
+{
+  "network": "sepolia",
+  "timestamp": "2025-11-26T16:44:37.219Z",
+  "deployer": "0x4B97Df84d0EC7B8d363cE13992D63a50939Ce86D",
+  "contracts": {
+    "chainlinkOracle": "0x45328039a3F8a5502e34Ee9038b1649e33eF4600",
+    "fundingRateManager": "0x4848336ED7603b79e45325B03e12C6a938F8626E",
+    "liquidationKeeper": "0x82a2342907FfeB8cf7Dd43f7903211CA8CC90f5F",
+    "simplePositionManager": "0xa331c2Fccbaa812a84AC4941a44CC071C1af8f3e"
+  }
+}

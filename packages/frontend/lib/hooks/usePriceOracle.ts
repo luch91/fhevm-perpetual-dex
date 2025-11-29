@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useReadContract } from "wagmi";
 import { PRICE_ORACLE_ABI } from "@/lib/contracts/abis";
 import { CONTRACTS, TRADING_CONFIG } from "@/lib/config/contracts";
@@ -87,5 +88,3 @@ export function useFormattedPrice(asset: string = TRADING_CONFIG.DEFAULT_ASSET) 
   };
 }
 
-// Note: React import needed for useMemo
-import React from "react";
